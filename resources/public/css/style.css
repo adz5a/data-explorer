@@ -2,3 +2,72 @@ html, body {
     margin: 0;
     padding: 0;
 }
+
+ol.data-map {
+    list-style: none;
+}
+
+ol.data-map::before {
+    content: "{";
+}
+
+ol.data-map::after {
+    content: "}";
+}
+
+.data-map-key {
+    color: green;
+    margin-right: 1rem;
+}
+
+.data-map-key::before {
+    content: "\"";
+}
+
+.data-map-key::after {
+    content: "\":";
+}
+
+.data-string {
+    color: blue;
+}
+
+.data-string:before {
+    content: "\"";
+}
+
+.data-string:after {
+    content: "\"";
+}
+
+ul.data-vector {
+    list-style: none;
+}
+
+ul.data-vector::before {
+    content: "[";
+}
+
+ul.data-vector::after {
+    content: "]";
+}
+
+.data-vector-index {
+    color: red;
+    margin-right: 1rem;
+}
+.data-vector-index::after {
+    content: " - "
+}
+
+.data-boolean {
+    color: rebeccapurple;
+}
+
+.data-number {
+    color: tan;
+}
+
+.data-nil {
+    color: brown;
+}

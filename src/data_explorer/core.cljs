@@ -65,24 +65,63 @@
   (t/is (= :boolean (get-data-type false)))
   (t/is (= :nil (get-data-type nil))))
 
+(defmulti display-data get-data-type)
+
+(defmethod display-data :map
+  [map-data]
+  [:ol {:className "data-map"}
+   (->> map-data
+        (sort-by first)
+        (map (fn [[k v]]
+               ^{:key k}[:li
+                         [:span {:className "data-map-key"} (name k)]
+                         [display-data v]])))])
+
+(defmethod display-data :string
+  [data]
+  [:span {:className "data-string"} data])
+
+(defmethod display-data :vector
+  [data]
+  [:ul {:className "data-vector"}
+   (map (fn [data index]
+          ^{:key index}[:li
+                        [:span {:className "data-vector-index"} index]
+                        [display-data data]])
+        data
+        (range))])
+
+(defmethod display-data :boolean
+  [data]
+  [:span {:className "data-boolean"} (str data)])
+
+(defmethod display-data :number
+  [data]
+  [:span {:className "data-number"} (str data)])
+
+(defmethod display-data :nil
+  [data]
+  [:span {:className "data-nil"} "nil"])
+
+(defmethod display-data :default
+  [data]
+  [:span {:style {:padding "0.5rem"
+                  :font-weight "bold"}}
+   (str "Not implemented yet : " (name (get-data-type data)))])
+
 (defn visualizer [data]
   (let [t (get-data-type data)]
     [:article
      [:h1 "Visualizer"]
-     [:p (str "Data is of type " (name t))]]))
+     [:p (str "Data is of type " (name t))]
+     [display-data data]]))
 
 (defn data-explorer []
-  [:p (let [{:keys [error value]} (:data @app-state)]
+  [:section (let [{:keys [error value]} (:data @app-state)]
         (cond
           (not-nil? value) [visualizer value]
           (not-nil? error) "Error on parsing"
           :default "Wut wut"))])
-
-(defn display-data []
-  [:section
-   [:h1 "Visualizer"]
-   [display-raw-data]
-   [data-explorer]])
 
 (defn data-input-form []
   [:form {:onSubmit #(do
