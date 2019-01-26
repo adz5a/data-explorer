@@ -48,7 +48,9 @@
     (list? data) :list
     (set? data) :set
     (or (true? data)
-        (false? data)) :boolean))
+        (false? data)) :boolean
+    (symbol? data) :symbol
+    :default :undefined))
 
 (t/deftest test-get-data-type
   (t/is (= :map (get-data-type {})))
@@ -74,22 +76,52 @@
   (swap! state update :visible not))
 
 (defn edit-tooltip
-  [path]
-  [:span {:className "edit-tooltip"} "edit"])
+  [state]
+  [:span {:className "edit-tooltip"
+          :onClick (partial toggle-mode! state)} "edit"])
 
 (defn collapse-button
   [state]
   [:span {:className "collapse-button"
           :onClick (partial toggle-visible! state)} "v"])
 
+(defn edit-node
+  [data path state]
+  [:form {:style {:display "inline-block"}}
+   [:input {:type "text"
+            :name "data-input"
+            :defaultValue (str data)}]
+   [:input {:type "button"
+            :value "Edit!"
+            :onClick #(let [raw-data (-> %
+                                         (oget "target")
+                                         (oget "form")
+                                         (oget "elements")
+                                         (oget "data-input")
+                                         (oget "value"))
+                            data (try
+                                   (hash-map :value (->> raw-data
+                                                         read-string))
+                                   (catch js/Error error
+                                     {:error (oget error "message")}))
+                            update-path (apply conj [:data :value] path)]
+                        (if (:value data)
+                          (do
+                            (swap! app-state assoc-in update-path (:value data))
+                            (toggle-mode! state))
+                          (js/alert (str "Error " (:error data)))))}]])
+
 (defn display
   [data path]
   (let [local-state (atom {:edit-mode false
                            :visible true})]
-    [:div {:className "data-wrapper"}
-     [display-data data path local-state]
-     [edit-tooltip path]
-     [collapse-button local-state]]))
+    (fn [data path]
+      [:div {:className "data-wrapper"}
+       (if (:edit-mode @local-state)
+         [edit-node data path local-state]
+         [display-data data path local-state])
+       [edit-tooltip local-state]
+       [collapse-button local-state]])))
 
 (defmethod display-data :map
   [map-data path local-state]
@@ -126,6 +158,10 @@
 (defmethod display-data :keyword
   [data path]
   [:span {:className "data-keyword"} (name data)])
+
+(defmethod display-data :symbol
+  [data path]
+  [:span {:className "data-symbol"} (str data)])
 
 (defmethod display-data :number
   [data path]

@@ -127,3 +127,6 @@ ul.data-vector.data-vector-collapsed::before {
     content: ":";
 }
 
+.data-symbol {
+    color: black;
+}
