@@ -15,26 +15,26 @@
   (:require [reagent.core :as r :refer [atom]]
             [goog.object :refer [get] :rename {get oget}]))
 
-(defonce app-state (atom {:data-str nil}))
+(defonce app-state (atom {:raw nil}))
 
 (def app-dom-element (.getElementById js/document "app"))
 
-(defn current-data-str []
-  (let [current-value (get @app-state :data-str)]
-    (if (string? current-value)
-      [:p current-value]
-      [:p "Insert some data in the text area."])))
-
-(defn data-input []
-  [:textarea {:style {:border "solid black"
-                      :width "500px"
-                      :height "100px"}
-              :name "data-input"}])
-
 (defn update-data [data]
-  (swap! app-state assoc :data-str data))
+  (swap! app-state assoc :raw data))
 
-(defn app []
+(defn display-raw-data []
+  [:p (get @app-state :raw)])
+
+(defn data-explorer []
+  [:p "here goes the visualizer"])
+
+(defn display-data []
+  [:section
+   [:h1 "Visualizer"]
+   [display-raw-data]
+   [data-explorer]])
+
+(defn data-input-form []
   [:form {:onSubmit #(do
                        (.preventDefault %)
                        (-> %
@@ -44,10 +44,19 @@
                            (oget "value")
                            update-data))}
    [:h1 "Enter your data here"]
-   [data-input]
-   [current-data-str]
+   [:textarea {:style {:border "solid black"
+                       :width "500px"
+                       :height "100px"
+                       :display "block"}
+               :name "data-input"}]
    [:input {:type "submit"
             :value "Update data!"}]])
+
+
+(defn app []
+  [:section
+   [data-input-form]
+   [display-data]])
 
 (r/render
   [app]
