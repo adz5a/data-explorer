@@ -12,11 +12,14 @@
     - handle the failing case
     - handle the success case
   - display the data structure when success - OK
-  - display the type of data on success"
+  - display the type of data on success - OK
+  - display the data structure recursively - OK
+  - create a load-as-json mode and a load-as-edn mode"
   (:require [reagent.core :as r :refer [atom]]
             [goog.object :refer [get] :rename {get oget}]
             [cljs.reader :refer [read-string]]
-            [cljs.test :as t]))
+            [cljs.test :as t]
+            [clojure.walk :refer [keywordize-keys]]))
 
 (def not-nil? (complement nil?))
 
@@ -123,32 +126,61 @@
           (not-nil? error) "Error on parsing"
           :default "Wut wut"))])
 
+(defn load-json [click-event]
+  (let [raw-data (-> click-event
+                     (oget "target")
+                     (oget "form")
+                     (oget "elements")
+                     (oget "data-input")
+                     (oget "value"))
+        data (try
+               (hash-map :value (->> raw-data
+                                    (.parse js/JSON)
+                                    js->clj
+                                    keywordize-keys))
+               (catch js/Error error
+                 {:error (oget error "message")}))]
+    (swap! app-state assoc
+           :raw raw-data
+           :data data)))
+
+(defn load-edn [click-event]
+  (let [raw-data (-> click-event
+                     (oget "target")
+                     (oget "form")
+                     (oget "elements")
+                     (oget "data-input")
+                     (oget "value"))
+        data (try
+               (hash-map :value (->> raw-data
+                                     read-string))
+               (catch js/Error error
+                 {:error (oget error "message")}))]
+    (swap! app-state assoc
+           :raw raw-data
+           :data data)))
+
 (defn data-input-form []
-  [:form {:onSubmit #(do
-                       (.preventDefault %)
-                       (-> %
-                           (oget "target")
-                           (oget "elements")
-                           (oget "data-input")
-                           (oget "value")
-                           update-data))}
+  [:form
    [:h1 "Enter your data here"]
    [:textarea {:style {:border "solid black"
                        :width "500px"
                        :height "100px"
                        :display "block"}
                :name "data-input"}]
-   [:input {:type "submit"
-            :value "Update data!"}]])
-
+   [:input {:type "button"
+            :value "Load as JSON"
+            :onClick load-json}]
+   [:input {:type "button"
+            :value "Load as EDN"
+            :onClick load-edn}]])
 
 (defn app []
   [:section
    [data-input-form]
    [:section
-    [:h1 "Visualizer"]
-    [display-raw-data]
-    [data-explorer]]])
+    [data-explorer]
+    [display-raw-data]]])
 
 (r/render
   [app]
