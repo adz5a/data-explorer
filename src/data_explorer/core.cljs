@@ -29,15 +29,6 @@
 
 (def app-dom-element (.getElementById js/document "app"))
 
-(defn update-data [data]
-  (let [cljs-data (try
-                    (hash-map :value (read-string data))
-                    (catch js/Error error
-                      {:error error}))]
-    (swap! app-state assoc
-           :raw data
-           :data cljs-data)))
-
 (defn display-raw-data []
   [:article
    [:h1 "Raw data"]
@@ -74,41 +65,59 @@
 (comment
   (t/run-tests))
 
+(defmulti display-data get-data-type)
+
+(defn toggle-mode! [state]
+  (swap! state update :edit-mode not))
+
+(defn toggle-visible! [state]
+  (swap! state update :visible not))
+
 (defn edit-tooltip
   [path]
   [:span {:className "edit-tooltip"} "edit"])
 
-(defmulti display-data get-data-type)
+(defn collapse-button
+  [state]
+  [:span {:className "collapse-button"
+          :onClick (partial toggle-visible! state)} "v"])
 
 (defn display
   [data path]
-  [:div {:className "data-wrapper"}
-   [display-data data path]
-   [edit-tooltip path]])
+  (let [local-state (atom {:edit-mode false
+                           :visible true})]
+    [:div {:className "data-wrapper"}
+     [display-data data path local-state]
+     [edit-tooltip path]
+     [collapse-button local-state]]))
 
 (defmethod display-data :map
-  [map-data path]
-  [:ol {:className "data-map"}
-   (->> map-data
-        (sort-by first)
-        (map (fn [[k v]]
-               ^{:key k}[:li
-                         [:span {:className "data-map-key"} (name k)]
-                         [display v (conj path k)]])))])
+  [map-data path local-state]
+  (if (:visible @local-state)
+    [:ol {:className "data-map"}
+     (->> map-data
+          (sort-by first)
+          (map (fn [[k v]]
+                 ^{:key k}[:li
+                           [:span {:className "data-map-key"} (name k)]
+                           [display v (conj path k)]])))]
+    [:ol {:className "data-map data-map-collapsed"}]))
 
 (defmethod display-data :string
   [data path]
   [:span {:className "data-string"} data])
 
 (defmethod display-data :vector
-  [data path]
-  [:ul {:className "data-vector"}
-   (map (fn [data index]
-          ^{:key index}[:li
-                        [:span {:className "data-vector-index"} index]
-                        [display data (conj path index)]])
-        data
-        (range))])
+  [data path local-state]
+  (if (:visible @local-state)
+    [:ul {:className "data-vector"}
+     (map (fn [data index]
+            ^{:key index}[:li
+                          [:span {:className "data-vector-index"} index]
+                          [display data (conj path index)]])
+          data
+          (range))]
+    [:ul {:className "data-vector data-vector-collapsed"}]))
 
 (defmethod display-data :boolean
   [data path]
