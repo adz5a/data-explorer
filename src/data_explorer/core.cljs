@@ -6,27 +6,77 @@
   read-string on it and parse it as a clojure data structure. If it succeeds it
   will then offer a nice view of the data structure with controls to open/close
   nested structures and edit functionality.
-  
+
   TODO:
-  - load a clojure data structure from the page
+  - load a clojure data structure from the page - OK
     - handle the failing case
     - handle the success case
-  - display the data structure when success"
+  - display the data structure when success - OK
+  - display the type of data on success"
   (:require [reagent.core :as r :refer [atom]]
-            [goog.object :refer [get] :rename {get oget}]))
+            [goog.object :refer [get] :rename {get oget}]
+            [cljs.reader :refer [read-string]]
+            [cljs.test :as t]))
 
-(defonce app-state (atom {:raw nil}))
+(def not-nil? (complement nil?))
+
+(defonce app-state (atom {:raw nil
+                          :data nil}))
 
 (def app-dom-element (.getElementById js/document "app"))
 
 (defn update-data [data]
-  (swap! app-state assoc :raw data))
+  (let [cljs-data (try
+                    (hash-map :value (read-string data))
+                    (catch js/Error error
+                      {:error error}))]
+    (swap! app-state assoc
+           :raw data
+           :data cljs-data)))
 
 (defn display-raw-data []
-  [:p (get @app-state :raw)])
+  [:article
+   [:h1 "Raw data"]
+   [:p (get @app-state :raw)]])
+
+(defn get-data-type
+  "Returns a symbol for each data type. Supports a subset of data types, see
+  tests."
+  [data]
+  (cond
+    (map? data) :map
+    (vector? data) :vector
+    (nil? data) :nil
+    (number? data) :number
+    (string? data) :string
+    (list? data) :list
+    (set? data) :set
+    (or (true? data)
+        (false? data)) :boolean))
+
+(t/deftest test-get-data-type
+  (t/is (= :map (get-data-type {})))
+  (t/is (= :vector (get-data-type [])))
+  (t/is (= :list (get-data-type ())))
+  (t/is (= :set (get-data-type #{})))
+  (t/is (= :number (get-data-type 1)))
+  (t/is (= :string (get-data-type "1")))
+  (t/is (= :boolean (get-data-type true)))
+  (t/is (= :boolean (get-data-type false)))
+  (t/is (= :nil (get-data-type nil))))
+
+(defn visualizer [data]
+  (let [t (get-data-type data)]
+    [:article
+     [:h1 "Visualizer"]
+     [:p (str "Data is of type " (name t))]]))
 
 (defn data-explorer []
-  [:p "here goes the visualizer"])
+  [:p (let [{:keys [error value]} (:data @app-state)]
+        (cond
+          (not-nil? value) [visualizer value]
+          (not-nil? error) "Error on parsing"
+          :default "Wut wut"))])
 
 (defn display-data []
   [:section
