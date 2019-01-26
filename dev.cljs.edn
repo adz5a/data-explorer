@@ -1,2 +1,3 @@
-^{:watch-dirs ["src"]}
+^{:watch-dirs ["src"]
+  :css-dirs ["resources/public/css"]}
 {:main data-explorer.core}
