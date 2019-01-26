@@ -106,7 +106,10 @@
 (defn app []
   [:section
    [data-input-form]
-   [display-data]])
+   [:section
+    [:h1 "Visualizer"]
+    [display-raw-data]
+    [data-explorer]]])
 
 (r/render
   [app]
