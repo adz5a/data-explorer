@@ -74,55 +74,60 @@
 (comment
   (t/run-tests))
 
+(defn edit-tooltip
+  [path]
+  [:span {:className "edit-tooltip"} "edit"])
+
 (defmulti display-data get-data-type)
 
-(defmethod display-data :map
-  [map-data display-state]
-  (cond
-    (= display-state :all)
-    [:ol {:className "data-map"}
-     (->> map-data
-          (sort-by first)
-          (map (fn [[k v]]
-                 ^{:key k}[:li
-                           [:span {:className "data-map-key"} (name k)]
-                           [display-data v]])))]
+(defn display
+  [data path]
+  [:div {:className "data-wrapper"}
+   [display-data data path]
+   [edit-tooltip path]])
 
-    (= display-state :hide)
-    [:ol {:className "data-map data-map-collapsed"}]))
+(defmethod display-data :map
+  [map-data path]
+  [:ol {:className "data-map"}
+   (->> map-data
+        (sort-by first)
+        (map (fn [[k v]]
+               ^{:key k}[:li
+                         [:span {:className "data-map-key"} (name k)]
+                         [display v (conj path k)]])))])
 
 (defmethod display-data :string
-  [data]
+  [data path]
   [:span {:className "data-string"} data])
 
 (defmethod display-data :vector
-  [data]
+  [data path]
   [:ul {:className "data-vector"}
    (map (fn [data index]
           ^{:key index}[:li
                         [:span {:className "data-vector-index"} index]
-                        [display-data data]])
+                        [display data (conj path index)]])
         data
         (range))])
 
 (defmethod display-data :boolean
-  [data]
+  [data path]
   [:span {:className "data-boolean"} (str data)])
 
 (defmethod display-data :keyword
-  [data]
+  [data path]
   [:span {:className "data-keyword"} (name data)])
 
 (defmethod display-data :number
-  [data]
+  [data path]
   [:span {:className "data-number"} (str data)])
 
 (defmethod display-data :nil
-  [data]
+  [data path]
   [:span {:className "data-nil"} "nil"])
 
 (defmethod display-data :default
-  [data]
+  [data path]
   [:span {:style {:padding "0.5rem"
                   :font-weight "bold"}}
    (str "Not implemented yet : " (name (get-data-type data)))])
@@ -137,9 +142,9 @@
   (let [t (get-data-type data)]
     [:section
      [:h1 "Visualizer"]
-     [:button {:onClick collapse-all} "Collapse all"]
-     [:button {:onClick expand-all} "Expand all"]
-     [display-data data (:display-path @app-state)]]))
+     [display
+      data
+      []]]))
 
 (defn data-explorer []
   [:section (let [{:keys [error value]} (:data @app-state)]
@@ -200,8 +205,6 @@
 (defn app []
   [:section
    [data-input-form]
-   [:h3 "app state"]
-   [display-data (@app-state :display-path) :all]
    [:section
     [data-explorer]
     [display-raw-data]]])

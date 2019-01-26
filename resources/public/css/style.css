@@ -1,9 +1,33 @@
 html, body {
     margin: 0;
     padding: 0;
+    background-color: lightgrey;
+}
+
+.data-wrapper {
+    position: relative;
+    display: inline-block;
+    border: solid transparent 1px;
+}
+
+.data-wrapper:hover {
+    border: solid red 1px;
+}
+
+.edit-tooltip {
+    position: absolute;
+    left: 0%;
+    top: 1.3rem;
+    visibility: hidden;
+    cursor: pointer;
+}
+
+.data-wrapper:hover > .edit-tooltip {
+    visibility: visible;
 }
 
 ol.data-map {
+    position: relative;
     list-style: none;
 }
 
@@ -20,6 +44,7 @@ ol.data-map.data-map-collapsed::before {
 }
 
 .data-map-key {
+    position: relative;
     color: green;
     margin-right: 1rem;
 }
@@ -33,6 +58,7 @@ ol.data-map.data-map-collapsed::before {
 }
 
 .data-string {
+    position: relative;
     color: blue;
 }
 
@@ -45,6 +71,7 @@ ol.data-map.data-map-collapsed::before {
 }
 
 ul.data-vector {
+    position: relative;
     list-style: none;
 }
 
@@ -57,6 +84,7 @@ ul.data-vector::after {
 }
 
 .data-vector-index {
+    position: relative;
     color: red;
     margin-right: 1rem;
 }
@@ -65,21 +93,26 @@ ul.data-vector::after {
 }
 
 .data-boolean {
+    position: relative;
     color: rebeccapurple;
 }
 
 .data-number {
+    position: relative;
     color: tan;
 }
 
 .data-nil {
+    position: relative;
     color: brown;
 }
 
 .data-keyword {
+    position: relative;
     color: yellow;
 }
 
 .data-keyword::before {
     content: ":";
 }
+
