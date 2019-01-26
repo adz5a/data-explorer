@@ -15,6 +15,10 @@ ol.data-map::after {
     content: "}";
 }
 
+ol.data-map.data-map-collapsed::before {
+    content: "{...";
+}
+
 .data-map-key {
     color: green;
     margin-right: 1rem;
@@ -70,4 +74,12 @@ ul.data-vector::after {
 
 .data-nil {
     color: brown;
+}
+
+.data-keyword {
+    color: yellow;
+}
+
+.data-keyword::before {
+    content: ":";
 }

@@ -24,7 +24,8 @@
 (def not-nil? (complement nil?))
 
 (defonce app-state (atom {:raw nil
-                          :data nil}))
+                          :data nil
+                          :display-path :all}))
 
 (def app-dom-element (.getElementById js/document "app"))
 
@@ -52,6 +53,7 @@
     (nil? data) :nil
     (number? data) :number
     (string? data) :string
+    (keyword? data) :keyword
     (list? data) :list
     (set? data) :set
     (or (true? data)
@@ -63,22 +65,31 @@
   (t/is (= :list (get-data-type ())))
   (t/is (= :set (get-data-type #{})))
   (t/is (= :number (get-data-type 1)))
+  (t/is (= :keyword (get-data-type :yolo)))
   (t/is (= :string (get-data-type "1")))
   (t/is (= :boolean (get-data-type true)))
   (t/is (= :boolean (get-data-type false)))
   (t/is (= :nil (get-data-type nil))))
 
+(comment
+  (t/run-tests))
+
 (defmulti display-data get-data-type)
 
 (defmethod display-data :map
-  [map-data]
-  [:ol {:className "data-map"}
-   (->> map-data
-        (sort-by first)
-        (map (fn [[k v]]
-               ^{:key k}[:li
-                         [:span {:className "data-map-key"} (name k)]
-                         [display-data v]])))])
+  [map-data display-state]
+  (cond
+    (= display-state :all)
+    [:ol {:className "data-map"}
+     (->> map-data
+          (sort-by first)
+          (map (fn [[k v]]
+                 ^{:key k}[:li
+                           [:span {:className "data-map-key"} (name k)]
+                           [display-data v]])))]
+
+    (= display-state :hide)
+    [:ol {:className "data-map data-map-collapsed"}]))
 
 (defmethod display-data :string
   [data]
@@ -98,6 +109,10 @@
   [data]
   [:span {:className "data-boolean"} (str data)])
 
+(defmethod display-data :keyword
+  [data]
+  [:span {:className "data-keyword"} (name data)])
+
 (defmethod display-data :number
   [data]
   [:span {:className "data-number"} (str data)])
@@ -112,12 +127,19 @@
                   :font-weight "bold"}}
    (str "Not implemented yet : " (name (get-data-type data)))])
 
+(defn collapse-all [_click-event]
+  (swap! app-state assoc :display-path :hide))
+
+(defn expand-all [_click-event]
+  (swap! app-state assoc :display-path :all))
+
 (defn visualizer [data]
   (let [t (get-data-type data)]
-    [:article
+    [:section
      [:h1 "Visualizer"]
-     [:p (str "Data is of type " (name t))]
-     [display-data data]]))
+     [:button {:onClick collapse-all} "Collapse all"]
+     [:button {:onClick expand-all} "Expand all"]
+     [display-data data (:display-path @app-state)]]))
 
 (defn data-explorer []
   [:section (let [{:keys [error value]} (:data @app-state)]
@@ -178,6 +200,8 @@
 (defn app []
   [:section
    [data-input-form]
+   [:h3 "app state"]
+   [display-data (@app-state :display-path) :all]
    [:section
     [data-explorer]
     [display-raw-data]]])
