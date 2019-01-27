@@ -1,22 +1,23 @@
 # data-explorer
 
-A Clojure library designed to ... well, that part is up to you.
+Simplistic "data-explorer" made with ClojureScript and Reagent.
 
-## Usage
+Let's you load JSON/EDN, see it and edit it.
 
-FIXME
 
-## License
+### Run the project
 
-Copyright © 2019 FIXME
+The project uses leiningen 2.8.1. To make it work with Vim use the following
+commands:
 
-This program and the accompanying materials are made available under the
-terms of the Eclipse Public License 2.0 which is available at
-http://www.eclipse.org/legal/epl-2.0.
+```
+$ lein repl
+=> (require 'figwheel.main.api)
+=> (figwheel.main.api/start {:mode :serve} "dev")
+=> (figwheel.main.api/cljs-repl "dev")
+```
 
-This Source Code may also be made available under the following Secondary
-Licenses when the conditions for such availability set forth in the Eclipse
-Public License, v. 2.0 are satisfied: GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or (at your
-option) any later version, with the GNU Classpath Exception which is available
-at https://www.gnu.org/software/classpath/license.html.
+And within a ClojureScript buffer run
+```
+:Piggieback (figwheel.main.api/repl-env "dev")
+```
